@@ -9,11 +9,6 @@ on:
 jobs:
   build-test-sonar:
     runs-on: ubuntu-latest
-    env:
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      SONAR_PROJECT_KEY: ${{ vars.SONAR_PROJECT_KEY }}
-      SONAR_ORG: ${{ vars.SONAR_ORG }}
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -25,7 +20,7 @@ jobs:
           java-version: "24"
           cache: maven
 
-      - name: Cache SonarQube packages
+      - name: Cache SonarCloud packages
         uses: actions/cache@v4
         with:
           path: ~/.sonar/cache
@@ -33,10 +28,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-sonar-
 
-      - name: Build and analyze
+      - name: Build and test
+        run: .mvn-B -ntp verify
+
+      - name: SonarCloud Scan (auto-provision)
+        uses: SonarSource/sonarcloud-github-action@v2
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: |
-          mvn -B -ntp verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
-            -Dsonar.organization=${{ vars.SONAR_ORG }} \
-            -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }}
+          SONAR_HOST_URL: https://sonarcloud.io
