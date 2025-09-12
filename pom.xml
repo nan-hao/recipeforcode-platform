@@ -9,6 +9,11 @@
     <name>recipeforcode-platform (aggregator)</name>
     <description>Aggregator POM for RecipeForCode platform modules</description>
 
+    <properties>
+        <!-- Sonar picks up coverage reports from all modules -->
+        <sonar.coverage.jacoco.xmlReportPaths>**/target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+    </properties>
+
     <modules>
         <module>recipeforcode-platform-bom</module>
         <module>recipeforcode-parent</module>

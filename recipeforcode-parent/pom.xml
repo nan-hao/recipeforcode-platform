@@ -194,6 +194,12 @@
                     </execution>
                 </executions>
             </plugin>
+
+            <!-- Activate JaCoCo so coverage XML is produced for Sonar -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+            </plugin>
         </plugins>
     </build>
 
