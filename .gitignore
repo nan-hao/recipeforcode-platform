@@ -1,0 +1,45 @@
+# Maven build output
+target/
+*/target/
+
+# Maven specific files
+dependency-reduced-pom.xml
+*/.flattened-pom.xml
+
+# Logs
+logs/
+*.log
+hs_err_pid*
+replay_pid*
+
+# Java class files
+*.class
+
+# IDEs and editors
+.idea/
+*.iml
+*.ipr
+*.iws
+.classpath
+.project
+.settings/
+.factorypath
+.vscode/
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# Env/config
+.env
+.java-version
+
+# Test reports
+surefire-reports/
+failsafe-reports/
+
+# NetBeans
+nb-configuration.xml
+
+# Maven Wrapper timing file (keep wrapper JAR tracked if present)
+.mvn/timing.properties

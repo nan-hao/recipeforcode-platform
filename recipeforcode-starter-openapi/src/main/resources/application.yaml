@@ -1,0 +1,5 @@
+springdoc:
+  api-docs:
+    enabled: ${recipeforcode.openapi.enabled:true}
+  swagger-ui:
+    enabled: ${recipeforcode.openapi.enabled:true}
