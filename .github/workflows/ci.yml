@@ -33,17 +33,10 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-sonar-
 
-      - name: Cache Maven Wrapper distributions
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.m2/wrapper
-            ~/.m2/wrapper/dists
-          key: ${{ runner.os }}-maven-wrapper-${{ hashFiles('.mvn/wrapper/maven-wrapper.properties') }}
       - name: Build and analyze
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
-          ./mvnw -B -ntp verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
+          mvn -B -ntp verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
             -Dsonar.organization=${{ vars.SONAR_ORG }} \
             -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }}
