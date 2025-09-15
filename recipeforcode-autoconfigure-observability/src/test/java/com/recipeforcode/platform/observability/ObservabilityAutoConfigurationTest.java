@@ -2,6 +2,7 @@ package com.recipeforcode.platform.observability;
 
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
@@ -16,7 +17,7 @@ class ObservabilityAutoConfigurationTest {
             .withConfiguration(AutoConfigurations.of(ObservabilityAutoConfiguration.class));
 
     @Test
-    void createsCustomizerAndAddsServiceTagWhenConfigured() {
+    void shouldAddServiceTagWhenConfigured() {
         runner
                 .withPropertyValues("recipeforcode.observability.service=order-service")
                 .run(ctx -> {
@@ -40,7 +41,7 @@ class ObservabilityAutoConfigurationTest {
     }
 
     @Test
-    void doesNotAddServiceTagWhenBlank() {
+    void shouldNotAddServiceTagWhenBlank() {
         runner
                 .withPropertyValues("recipeforcode.observability.service=") // blank on purpose
                 .run(ctx -> {
@@ -59,11 +60,48 @@ class ObservabilityAutoConfigurationTest {
     }
 
     @Test
-    void backsOffWhenUserProvidesCustomizerBeanWithSameName() {
+    void shouldConfigureHttpPercentilesFilter() {
+        runner.withPropertyValues(
+                "recipeforcode.observability.http-percentiles=0.5,0.9,0.99",
+                "recipeforcode.observability.add-request-id-mdc=false" // avoid servlet requirement
+        ).run(ctx -> {
+            assertThat(ctx).hasSingleBean(org.springframework.boot.actuate.autoconfigure.metrics.MeterRegistryCustomizer.class);
+            var filter = ctx.getBean(org.springframework.boot.actuate.autoconfigure.metrics.MeterRegistryCustomizer.class);
+            // also retrieve the MeterFilter bean
+            var meterFilter = ctx.getBean(io.micrometer.core.instrument.config.MeterFilter.class);
+            var id = new io.micrometer.core.instrument.Meter.Id(
+                    "http.server.requests",
+                    Tags.of("uri", "/test"),
+                    null,
+                    null,
+                    io.micrometer.core.instrument.Meter.Type.TIMER
+            );
+            var cfg = meterFilter.configure(id, io.micrometer.core.instrument.distribution.DistributionStatisticConfig.NONE);
+            assertThat(cfg.getPercentiles()).containsExactly(0.5, 0.9, 0.99);
+        });
+    }
+
+    @Test
+    void shouldIncludeCommonTagsApplicationAndEnvironment() {
+        runner.withPropertyValues(
+                "spring.application.name=my-app",
+                "recipeforcode.observability.environment=prod",
+                "recipeforcode.observability.service=svc"
+        ).run(ctx -> {
+            var customizer = ctx.getBean("observabilityCommonTagsCustomizer",
+                    org.springframework.boot.actuate.autoconfigure.metrics.MeterRegistryCustomizer.class);
+            MeterRegistry registry = new SimpleMeterRegistry();
+            customizer.customize(registry);
+            var c = Counter.builder("demo").register(registry);
+            assertThat(c.getId().getTags()).extracting("key").contains("service", "application", "environment");
+        });
+    }
+
+    @Test
+    void shouldBackOffWhenUserProvidesCustomizerBeanWithSameName() {
         runner
                 .withUserConfiguration(UserProvidedCustomizerConfig.class)
                 .run(ctx -> {
-                    // Auto-config backs off in favor of the user bean with the same name
                     assertThat(ctx).hasBean("observabilityCommonTagsCustomizer");
                     @SuppressWarnings("unchecked")
                     var customizer = (org.springframework.boot.actuate.autoconfigure.metrics.MeterRegistryCustomizer<MeterRegistry>)
@@ -81,7 +119,7 @@ class ObservabilityAutoConfigurationTest {
     }
 
     @Test
-    void doesNotActivateWhenMicrometerClassesMissing() {
+    void shouldNotActivateWhenMicrometerClassesMissing() {
         runner
                 .withClassLoader(new FilteredClassLoader(
                         io.micrometer.core.instrument.MeterRegistry.class,

@@ -5,7 +5,7 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
 
 import java.util.List;
 
-@ConfigurationProperties("recipe.openapi")
+@ConfigurationProperties("recipeforcode.openapi")
 public record OpenApiProps(
         @DefaultValue("true") boolean enabled,
         @DefaultValue("Recipeforcode API") String title,
