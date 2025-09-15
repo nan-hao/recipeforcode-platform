@@ -69,7 +69,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_ACTOR: ${{ github.actor }}
-        run: ./mvnw -B -ntp -Drevision=${{ steps.vars.outputs.rev }} -DskipTests deploy
+        run: mvn -B -ntp -Drevision=${{ steps.vars.outputs.rev }} -DskipTests deploy
 
       - name: Create GitHub Release
         if: ${{ steps.vars.outputs.snapshot == 'false' && steps.tagcheck.outputs.exists == 'false' }}
