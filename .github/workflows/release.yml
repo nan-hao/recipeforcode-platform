@@ -1,0 +1,89 @@
+name: Release
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - ".mvn/maven.config"
+  workflow_dispatch: {}
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 24
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "24"
+          cache: maven
+
+      - name: Read revision from maven.config
+        id: vars
+        run: |
+          REV=$(sed -n 's/^-Drevision=\(.*\)$/\1/p' .mvn/maven.config | head -n1)
+          if [ -z "$REV" ]; then
+            echo "Revision not found in .mvn/maven.config" >&2
+            exit 1
+          fi
+          SNAPSHOT=false
+          case "$REV" in *-SNAPSHOT) SNAPSHOT=true;; esac
+          TAG="v${REV}"
+          echo "rev=$REV" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "snapshot=$SNAPSHOT" >> "$GITHUB_OUTPUT"
+
+      - name: Skip snapshot releases
+        if: ${{ steps.vars.outputs.snapshot == 'true' }}
+        run: echo "Snapshot revision detected (${ { steps.vars.outputs.rev } }); skipping release."
+
+      - name: Check if tag already exists
+        if: ${{ steps.vars.outputs.snapshot == 'false' }}
+        id: tagcheck
+        run: |
+          git fetch --tags --force
+          if git rev-parse -q --verify "refs/tags/${{ steps.vars.outputs.tag }}" >/dev/null; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build artifacts
+        if: ${{ steps.vars.outputs.snapshot == 'false' && steps.tagcheck.outputs.exists == 'false' }}
+        run: ./mvnw -B -ntp -Drevision=${{ steps.vars.outputs.rev }} -DskipTests package
+
+      - name: Create GitHub Release
+        if: ${{ steps.vars.outputs.snapshot == 'false' && steps.tagcheck.outputs.exists == 'false' }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.vars.outputs.tag }}
+          name: ${{ steps.vars.outputs.tag }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          files: |
+            recipeforcode-*/target/*.jar
+            recipeforcode-*/target/*.pom
+            recipeforcode-*/target/*.module
+
+      - name: Release summary
+        if: ${{ steps.vars.outputs.snapshot == 'false' }}
+        run: |
+          if [ "${{ steps.tagcheck.outputs.exists }}" = "true" ]; then
+            echo "Tag ${{ steps.vars.outputs.tag }} already exists. No release created."
+          else
+            echo "Released ${{ steps.vars.outputs.tag }} successfully."
+          fi
+
