@@ -93,6 +93,7 @@ Multi-module Maven project providing a company BOM, a parent POM with standardiz
 
 - Overriding the default customizer
   - Define your own bean named `observabilityCommonTagsCustomizer` to replace the platform’s one.
+  - The observability starter includes a default `logback-spring.xml` that outputs JSON via LogstashEncoder and includes MDC (e.g., `requestId`) and `app` from `spring.application.name`. Services can override by adding their own `logback-spring.xml`.
 
 ## Resilience usage
 - Add starter: `com.recipeforcode:recipeforcode-starter-resilience`

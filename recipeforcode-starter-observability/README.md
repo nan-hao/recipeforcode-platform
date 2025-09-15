@@ -48,3 +48,6 @@ management:
 ## Overriding the default customizer
 Provide a bean named `observabilityCommonTagsCustomizer` to take full control of common meter tags.
 
+## Logging with requestId
+- This starter ships a default `logback-spring.xml` that uses LogstashEncoder (JSON) and includes MDC values. The MDC `requestId` is present in each JSON log line, and `app` is set from `spring.application.name`.
+- You can override logging by adding your own `logback-spring.xml` in your service.

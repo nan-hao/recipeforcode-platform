@@ -66,8 +66,6 @@ class ObservabilityAutoConfigurationTest {
                 "recipeforcode.observability.add-request-id-mdc=false" // avoid servlet requirement
         ).run(ctx -> {
             assertThat(ctx).hasSingleBean(org.springframework.boot.actuate.autoconfigure.metrics.MeterRegistryCustomizer.class);
-            var filter = ctx.getBean(org.springframework.boot.actuate.autoconfigure.metrics.MeterRegistryCustomizer.class);
-            // also retrieve the MeterFilter bean
             var meterFilter = ctx.getBean(io.micrometer.core.instrument.config.MeterFilter.class);
             var id = new io.micrometer.core.instrument.Meter.Id(
                     "http.server.requests",
@@ -127,6 +125,67 @@ class ObservabilityAutoConfigurationTest {
                 .run(ctx -> assertThat(ctx).doesNotHaveBean("observabilityCommonTagsCustomizer"));
     }
 
+    @Test
+    void shouldPopulateMdcWithRequestIdServiceAndHeaders() {
+        runner.withPropertyValues(
+                "recipeforcode.observability.service=svc",
+                "recipeforcode.observability.mdc-headers=User-Id, Tenant-Id",
+                "recipeforcode.observability.add-request-id-mdc=true"
+        ).run(ctx -> {
+            var reg = ctx.getBean("mdcFilter", org.springframework.boot.web.servlet.FilterRegistrationBean.class);
+            var filter = (org.springframework.web.filter.OncePerRequestFilter) reg.getFilter();
+
+            var req = new org.springframework.mock.web.MockHttpServletRequest();
+            var res = new org.springframework.mock.web.MockHttpServletResponse();
+            req.addHeader("X-Request-Id", "abc-123");
+            req.addHeader("User-Id", "u1");
+
+            final boolean[] checked = {false};
+            try {
+                filter.doFilter(req, res, (request, response) -> {
+                    // Validate MDC contents inside the filter chain
+                    assertThat(org.slf4j.MDC.get("requestId")).isEqualTo("abc-123");
+                    assertThat(org.slf4j.MDC.get("service")).isEqualTo("svc");
+                    assertThat(org.slf4j.MDC.get("hdr.user-id")).isEqualTo("u1");
+                    checked[0] = true;
+                });
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+
+            assertThat(checked[0]).isTrue();
+            // After filter completes, MDC should be cleared
+            assertThat(org.slf4j.MDC.get("requestId")).isNull();
+            assertThat(org.slf4j.MDC.get("service")).isNull();
+        });
+    }
+
+    @Test
+    void shouldGenerateCorrelationIdWhenHeaderMissing() {
+        runner.withPropertyValues(
+                "recipeforcode.observability.service=svc",
+                "recipeforcode.observability.add-request-id-mdc=true"
+        ).run(ctx -> {
+            var reg = ctx.getBean("mdcFilter", org.springframework.boot.web.servlet.FilterRegistrationBean.class);
+            var filter = (org.springframework.web.filter.OncePerRequestFilter) reg.getFilter();
+
+            var req = new org.springframework.mock.web.MockHttpServletRequest();
+            var res = new org.springframework.mock.web.MockHttpServletResponse();
+
+            final String[] seenId = {null};
+            filter.doFilter(req, res, (request, response) -> {
+                var id = org.slf4j.MDC.get("requestId");
+                seenId[0] = id;
+                assertThat(id).isNotBlank();
+                // looks like a UUID (basic regex to avoid strict dependency)
+                assertThat(id).matches("[0-9a-fA-F\\-]{20,}");
+            });
+
+            // ensure cleared after chain
+            assertThat(org.slf4j.MDC.get("requestId")).isNull();
+            assertThat(seenId[0]).isNotBlank();
+        });
+    }
     @org.springframework.context.annotation.Configuration
     static class UserProvidedCustomizerConfig {
         @org.springframework.context.annotation.Bean(name = "observabilityCommonTagsCustomizer")
