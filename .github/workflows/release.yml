@@ -16,6 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      packages: write
 
     steps:
       - name: Checkout
@@ -29,6 +30,9 @@ jobs:
           distribution: temurin
           java-version: "24"
           cache: maven
+          server-id: github-recipeforcode-platform
+          server-username: GITHUB_ACTOR
+          server-password: GITHUB_TOKEN
 
       - name: Read revision from maven.config
         id: vars
@@ -47,7 +51,7 @@ jobs:
 
       - name: Skip snapshot releases
         if: ${{ steps.vars.outputs.snapshot == 'true' }}
-        run: echo "Snapshot revision detected (${ { steps.vars.outputs.rev } }); skipping release."
+        run: echo "Snapshot revision detected (${{ steps.vars.outputs.rev }}); skipping release."
 
       - name: Check if tag already exists
         if: ${{ steps.vars.outputs.snapshot == 'false' }}
@@ -60,9 +64,12 @@ jobs:
             echo "exists=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Build artifacts
+      - name: Deploy to GitHub Packages
         if: ${{ steps.vars.outputs.snapshot == 'false' && steps.tagcheck.outputs.exists == 'false' }}
-        run: mvn -B -ntp -Drevision=${{ steps.vars.outputs.rev }} -DskipTests package
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_ACTOR: ${{ github.actor }}
+        run: ./mvnw -B -ntp -Drevision=${{ steps.vars.outputs.rev }} -DskipTests deploy
 
       - name: Create GitHub Release
         if: ${{ steps.vars.outputs.snapshot == 'false' && steps.tagcheck.outputs.exists == 'false' }}
@@ -86,4 +93,3 @@ jobs:
           else
             echo "Released ${{ steps.vars.outputs.tag }} successfully."
           fi
-
