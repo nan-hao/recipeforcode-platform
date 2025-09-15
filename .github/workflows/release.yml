@@ -62,7 +62,7 @@ jobs:
 
       - name: Build artifacts
         if: ${{ steps.vars.outputs.snapshot == 'false' && steps.tagcheck.outputs.exists == 'false' }}
-        run: ./mvnw -B -ntp -Drevision=${{ steps.vars.outputs.rev }} -DskipTests package
+        run: mvn -B -ntp -Drevision=${{ steps.vars.outputs.rev }} -DskipTests package
 
       - name: Create GitHub Release
         if: ${{ steps.vars.outputs.snapshot == 'false' && steps.tagcheck.outputs.exists == 'false' }}
