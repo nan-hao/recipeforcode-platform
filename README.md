@@ -1,5 +1,11 @@
 # RecipeForCode Platform
 
+[![Release](https://img.shields.io/github/v/release/nan-hao/recipeforcode-platform?display_name=tag&sort=semver)](https://github.com/nan-hao/recipeforcode-platform/releases)
+[![Java Build](https://github.com/nan-hao/recipeforcode-platform/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/nan-hao/recipeforcode-platform/actions/workflows/ci.yml)
+![Java](https://img.shields.io/badge/Java-24-007396?logo=java)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=nan-hao_recipeforcode-platform&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=nan-hao_recipeforcode-platform)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=nan-hao_recipeforcode-platform&metric=coverage)](https://sonarcloud.io/summary/new_code?id=nan-hao_recipeforcode-platform)
+
 Multi-module Maven project providing a company BOM, a parent POM with standardized plugins (including Failsafe), and focused Spring Boot starters with auto-configuration for observability, resilience, and OpenAPI.
 
 ## Modules
