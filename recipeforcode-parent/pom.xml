@@ -28,7 +28,7 @@
             <dependency>
                 <groupId>com.recipeforcode</groupId>
                 <artifactId>recipeforcode-platform-bom</artifactId>
-                <version>${project.version}</version>
+                <version>${revision}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
