@@ -38,6 +38,21 @@
                 <artifactId>recipeforcode-autoconfigure-openapi</artifactId>
                 <version>${project.version}</version>
             </dependency>
+            <dependency>
+                <groupId>com.recipeforcode</groupId>
+                <artifactId>recipeforcode-starter-observability</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.recipeforcode</groupId>
+                <artifactId>recipeforcode-starter-openapi</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.recipeforcode</groupId>
+                <artifactId>recipeforcode-starter-resilience</artifactId>
+                <version>${project.version}</version>
+            </dependency>
 
             <!-- Import Spring Boot BOM -->
             <dependency>
