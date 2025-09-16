@@ -1,9 +1,11 @@
 <configuration>
     <!-- Default JSON logging with MDC. Includes requestId from MDC and app name from Spring. -->
+    <!-- Resolve spring.application.name from Spring Environment for reliable substitution -->
+    <springProperty scope="context" name="appName" source="spring.application.name"/>
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder class="net.logstash.logback.encoder.LogstashEncoder">
             <includeMdc>true</includeMdc>
-            <customFields>{"app":"${spring.application.name:-application}"}</customFields>
+            <customFields>{"app":"${appName:-application}"}</customFields>
         </encoder>
     </appender>
 
