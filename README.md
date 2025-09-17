@@ -2,7 +2,7 @@
 
 [![Release](https://img.shields.io/github/v/release/nan-hao/recipeforcode-platform?display_name=tag&sort=semver)](https://github.com/nan-hao/recipeforcode-platform/releases)
 [![Java Build](https://github.com/nan-hao/recipeforcode-platform/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/nan-hao/recipeforcode-platform/actions/workflows/ci.yml)
-![Java](https://img.shields.io/badge/Java-24-007396?logo=java)
+![Java](https://img.shields.io/badge/Java-25-007396?logo=java)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=nan-hao_recipeforcode-platform&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=nan-hao_recipeforcode-platform)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=nan-hao_recipeforcode-platform&metric=coverage)](https://sonarcloud.io/summary/new_code?id=nan-hao_recipeforcode-platform)
 
@@ -27,7 +27,7 @@ Multi-module Maven project providing a company BOM, a parent POM with standardiz
 
 ## Java, Spring Boot
 - Group ID: `com.recipeforcode`
-- Java: 24
+- Java: 25
 - Spring Boot: 3.5.5
 
 ## Using in a new service
@@ -141,3 +141,57 @@ OpenAPI properties provided by auto-config (overridable):
 - All modules share the same version managed at the root/parent.
 - The platform BOM pins external library versions; services and starters rely on the BOM with no explicit versions.
 - Update BOM versions first, then release a new aligned version across all modules.
+
+## Consuming from GitHub Packages
+- Add the platform parent in your service POM (force remote resolution with `<relativePath/>`):
+  ```xml
+  <parent>
+    <groupId>com.recipeforcode</groupId>
+    <artifactId>recipeforcode-parent</artifactId>
+    <version>0.2.6</version>
+    <relativePath/>
+  </parent>
+  ```
+- Put the GitHub Packages repository and credentials in `~/.m2/settings.xml` (parent/BOM resolve before your POM’s `<repositories>`):
+  ```xml
+  <settings xmlns="http://maven.apache.org/SETTINGS/1.2.0"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.2.0 https://maven.apache.org/xsd/settings-1.2.0.xsd">
+    <servers>
+      <server>
+        <id>github-recipeforcode-platform</id>
+        <username>${env.GITHUB_ACTOR}</username>
+        <password>${env.GITHUB_TOKEN}</password>
+      </server>
+    </servers>
+    <profiles>
+      <profile>
+        <id>github-packages</id>
+        <repositories>
+          <repository>
+            <id>github-recipeforcode-platform</id>
+            <url>https://maven.pkg.github.com/nan-hao/recipeforcode-platform</url>
+            <releases><enabled>true</enabled></releases>
+            <snapshots><enabled>true</enabled></snapshots>
+          </repository>
+        </repositories>
+        <pluginRepositories>
+          <pluginRepository>
+            <id>github-recipeforcode-platform</id>
+            <url>https://maven.pkg.github.com/nan-hao/recipeforcode-platform</url>
+            <releases><enabled>true</enabled></releases>
+            <snapshots><enabled>true</enabled></snapshots>
+          </pluginRepository>
+        </pluginRepositories>
+      </profile>
+    </profiles>
+    <activeProfiles>
+      <activeProfile>github-packages</activeProfile>
+    </activeProfiles>
+  </settings>
+  ```
+- From platform 0.2.6+, the BOM and platform starters are fully managed. In your service, omit versions for Boot/Testcontainers/Lombok and for:
+  - `com.recipeforcode:recipeforcode-starter-observability`
+  - `com.recipeforcode:recipeforcode-starter-openapi`
+  - `com.recipeforcode:recipeforcode-starter-resilience`
+- Note: repositories in a service POM do not help with parent/BOM resolution — use `settings.xml`.
