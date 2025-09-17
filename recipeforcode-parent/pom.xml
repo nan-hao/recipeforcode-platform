@@ -34,6 +34,14 @@
         </dependencies>
     </dependencyManagement>
 
+    <repositories>
+        <repository>
+            <id>github-recipeforcode-platform</id>
+            <name>GitHub Packages</name>
+            <url>https://maven.pkg.github.com/nan-hao/recipeforcode-platform</url>
+        </repository>
+    </repositories>
+
     <build>
         <pluginManagement>
             <plugins>
